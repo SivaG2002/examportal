@@ -1,7 +1,6 @@
 "use client";
 
 import { useExam } from '@/context/ExamProvider';
-import { questions, TOTAL_QUESTIONS_PER_SECTION } from '@/lib/questions';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -9,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { HelpCircle, ChevronRight, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Answer } from '@/lib/types';
+import { Skeleton } from '../ui/skeleton';
 
 export function QuestionDisplay() {
   const {
@@ -18,15 +18,33 @@ export function QuestionDisplay() {
     saveAnswer,
     selectQuestion,
     submitSection,
+    examData,
   } = useExam();
 
-  if (currentSection === null) return null;
+  if (currentSection === null || !examData) {
+      return (
+        <div className="space-y-8">
+            <Skeleton className="h-8 w-1/3" />
+            <Skeleton className="h-12 w-full" />
+            <div className="space-y-4">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+            </div>
+        </div>
+      )
+  };
 
-  const questionData = questions[currentSection][currentQuestionIndex];
+  const sectionData = examData.sections.find(s => s.name.toLowerCase().replace(' ', '') === currentSection);
+  if (!sectionData) return <div>Section not found.</div>
+
+  const totalQuestions = sectionData.questions.length;
+  const questionData = sectionData.questions[currentQuestionIndex];
   const currentAnswer: Answer | undefined = answers[currentSection]?.[currentQuestionIndex];
 
   const handleNext = () => {
-    if (currentQuestionIndex < TOTAL_QUESTIONS_PER_SECTION - 1) {
+    if (currentQuestionIndex < totalQuestions - 1) {
       selectQuestion(currentQuestionIndex + 1);
     }
   };
@@ -39,7 +57,7 @@ export function QuestionDisplay() {
     saveAnswer(currentSection, currentQuestionIndex, { answer: value });
   }
 
-  const isLastQuestion = currentQuestionIndex === TOTAL_QUESTIONS_PER_SECTION - 1;
+  const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
 
   if (!questionData) {
     return <div>Loading question...</div>;
@@ -48,7 +66,7 @@ export function QuestionDisplay() {
   return (
     <Card className="border-0 shadow-none">
       <CardHeader>
-        <CardDescription className="font-semibold">Question {currentQuestionIndex + 1} of {TOTAL_QUESTIONS_PER_SECTION}</CardDescription>
+        <CardDescription className="font-semibold">Question {currentQuestionIndex + 1} of {totalQuestions}</CardDescription>
         <CardTitle className="text-2xl leading-relaxed">{questionData.question}</CardTitle>
       </CardHeader>
       

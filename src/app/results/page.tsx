@@ -6,14 +6,14 @@ import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Award, CheckCircle, HelpCircle, XCircle, Home } from 'lucide-react';
-import { questions, TOTAL_QUESTIONS_PER_SECTION } from '@/lib/questions';
 import { Section, sectionDetails } from '@/lib/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ResultsPage() {
-  const { user, answers, completedSections, resetExam } = useExam();
+  const { user, answers, completedSections, resetExam, examData } = useExam();
   const router = useRouter();
 
   useEffect(() => {
@@ -22,17 +22,30 @@ export default function ResultsPage() {
     }
   }, [user, router]);
 
-  if (!user) {
-    return <p>Loading results...</p>;
+  if (!user || !examData) {
+    return (
+        <div className="flex min-h-screen w-full items-center justify-center p-4 md:p-8">
+            <div className="max-w-4xl w-full space-y-4">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+            </div>
+        </div>
+    );
   }
 
-  const sections = Object.keys(sectionDetails) as Section[];
+  const sections = examData.sections.map(s => s.name.toLowerCase().replace(' ', '') as Section);
+  const totalQuestionsPerSection = examData.sections[0]?.questions.length || 25;
 
   const calculateStats = (section: Section) => {
     const sectionAnswers = answers[section] || {};
+    const sectionIndex = examData.sections.findIndex(s => s.name.toLowerCase().replace(' ', '') === section);
+    const questions = examData.sections[sectionIndex].questions;
+
     const attempted = Object.values(sectionAnswers).filter(a => a.answer).length;
     const correct = Object.values(sectionAnswers).filter((a, i) => {
-      const question = questions[section][i];
+      const question = questions[i];
       return question && a.answer === question.answer;
     }).length;
     const markedForDoubt = Object.values(sectionAnswers).filter(a => a.isMarkedForDoubt).length;
@@ -52,28 +65,31 @@ export default function ResultsPage() {
           </CardHeader>
           <CardContent>
             <Accordion type="single" collapsible className="w-full">
-              {sections.map(section => {
-                 if (!completedSections.includes(section)) return null;
-                 const stats = calculateStats(section);
-                 const details = sectionDetails[section];
+              {examData.sections.map((sectionData, sectionIndex) => {
+                 const sectionKey = sectionData.name.toLowerCase().replace(' ', '') as Section;
+                 if (!completedSections.includes(sectionKey)) return null;
+
+                 const stats = calculateStats(sectionKey);
+                 const details = sectionDetails[sectionKey];
                  const Icon = details.icon;
+                 
                  return (
-                    <AccordionItem key={section} value={section}>
+                    <AccordionItem key={sectionKey} value={sectionKey}>
                       <AccordionTrigger className="text-xl font-semibold hover:no-underline">
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4 flex-wrap">
                            <Icon className="h-6 w-6 text-primary" />
                            <span>{details.name}</span>
-                           <Badge variant="secondary">{stats.attempted}/{TOTAL_QUESTIONS_PER_SECTION} Attempted</Badge>
+                           <Badge variant="secondary">{stats.attempted}/{totalQuestionsPerSection} Attempted</Badge>
                            <Badge variant="outline" className="text-green-600 border-green-600">{stats.correct} Correct</Badge>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
-                            {Array.from({length: TOTAL_QUESTIONS_PER_SECTION}, (_, i) => {
-                                const question = questions[section][i];
+                            {Array.from({length: totalQuestionsPerSection}, (_, i) => {
+                                const question = examData.sections[sectionIndex].questions[i];
                                 if (!question) return null;
 
-                                const ans = answers[section]?.[i];
+                                const ans = answers[sectionKey]?.[i];
                                 const isCorrect = ans?.answer === question.answer;
                                 const isAttempted = !!ans?.answer;
 

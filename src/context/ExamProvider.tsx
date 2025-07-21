@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { ExamContextType, ExamState, Section, Answer } from '@/lib/types';
+import type { ExamContextType, ExamState, Section, Answer, ExamData } from '@/lib/types';
+import { getExamData } from '@/ai/flows/getExamData';
 import { DURATION_PER_SECTION } from '@/lib/questions';
 
 const ExamContext = createContext<ExamContextType | undefined>(undefined);
@@ -14,6 +15,7 @@ const getInitialState = (): ExamState => ({
   answers: {},
   currentQuestionIndex: 0,
   sectionStartTime: null,
+  examData: null,
 });
 
 
@@ -22,25 +24,41 @@ export const ExamProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
 
+  // Effect for fetching exam data from the backend flow
+  useEffect(() => {
+    const fetchExamData = async () => {
+        try {
+            const data = await getExamData();
+            setState(prev => ({ ...prev, examData: data }));
+        } catch (error) {
+            console.error("Failed to fetch exam data", error);
+        }
+    };
+    fetchExamData();
+  }, []);
+
+  // Effect for loading state from localStorage
   useEffect(() => {
     try {
       const savedState = localStorage.getItem('examState');
       if (savedState) {
         const parsedState = JSON.parse(savedState);
-        setState(parsedState);
+        // We keep the fetched examData and don't overwrite it with the potentially stale one from localStorage
+        setState(prev => ({ ...prev, ...parsedState, examData: prev.examData }));
       }
     } catch (error) {
       console.error("Failed to parse state from localStorage", error);
-      // If parsing fails, stick with the initial state
     } finally {
       setIsInitialized(true);
     }
   }, []);
 
+  // Effect for saving state to localStorage
   useEffect(() => {
     if (isInitialized) {
       try {
-        localStorage.setItem('examState', JSON.stringify(state));
+        const stateToSave = { ...state, examData: null }; // Avoid saving large exam data to localStorage
+        localStorage.setItem('examState', JSON.stringify(stateToSave));
       } catch (error) {
         console.error("Failed to save state to localStorage", error);
       }
@@ -52,12 +70,20 @@ export const ExamProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const startSection = useCallback((section: Section) => {
-    setState((prev) => ({
-      ...prev,
-      currentSection: section,
-      currentQuestionIndex: 0,
-      sectionStartTime: Date.now(),
-    }));
+    setState((prev) => {
+      if (!prev.examData) return prev; // Don't start if data isn't loaded
+      const sectionExists = prev.examData.sections.some(s => s.name.toLowerCase().replace(' ', '') === section);
+      if (!sectionExists) {
+        console.error(`Section "${section}" not found in exam data.`);
+        return prev;
+      }
+      return {
+        ...prev,
+        currentSection: section,
+        currentQuestionIndex: 0,
+        sectionStartTime: Date.now(),
+      }
+    });
     router.push('/exam');
   }, [router]);
 
@@ -79,9 +105,9 @@ export const ExamProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const submitSection = useCallback(() => {
     setState((prev) => {
-      if (!prev.currentSection) return prev;
+      if (!prev.currentSection || !prev.examData) return prev;
       const newCompletedSections = [...prev.completedSections, prev.currentSection];
-      const allSectionsDone = newCompletedSections.length === 3;
+      const allSectionsDone = newCompletedSections.length === prev.examData.sections.length;
       
       if (allSectionsDone) {
         router.replace('/results');
@@ -98,14 +124,17 @@ export const ExamProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetExam = useCallback(() => {
     const initialState = getInitialState();
-    setState(initialState);
+    // Re-fetch exam data on reset, but keep user info if present
+    setState(prev => ({ ...initialState, user: prev.user, examData: prev.examData }));
+    
     try {
-      localStorage.setItem('examState', JSON.stringify(initialState));
+      const stateToSave = { ...initialState, examData: null, user: state.user };
+      localStorage.setItem('examState', JSON.stringify(stateToSave));
     } catch (error) {
       console.error("Failed to clear state in localStorage", error);
     }
     router.replace('/');
-  }, [router]);
+  }, [router, state.user]);
 
   const getRemainingTime = useCallback(() => {
     if (!state.sectionStartTime || !isInitialized) return DURATION_PER_SECTION;
@@ -125,8 +154,6 @@ export const ExamProvider: React.FC<{ children: React.ReactNode }> = ({ children
     getRemainingTime,
   };
 
-  // Render children only after the state has been initialized from localStorage on the client.
-  // This prevents hydration mismatches.
   if (!isInitialized) {
     return null;
   }

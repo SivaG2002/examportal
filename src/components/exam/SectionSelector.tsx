@@ -6,10 +6,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { sectionDetails, Section } from '@/lib/types';
 import { CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '../ui/skeleton';
 
 export function SectionSelector() {
-  const { startSection, completedSections } = useExam();
-  const sections = Object.keys(sectionDetails) as Section[];
+  const { startSection, completedSections, examData } = useExam();
+  
+  if (!examData) {
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i} className="text-center p-6">
+                    <Skeleton className="h-16 w-16 rounded-full mx-auto mb-4" />
+                    <Skeleton className="h-8 w-3/4 mx-auto mb-4" />
+                    <Skeleton className="h-12 w-full mx-auto" />
+                </Card>
+            ))}
+        </div>
+    )
+  }
+
+  const sections = examData.sections.map(s => s.name.toLowerCase().replace(' ', '') as Section);
+
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -37,8 +54,8 @@ export function SectionSelector() {
                   Completed
                 </div>
               ) : (
-                <Button onClick={() => startSection(section)} size="lg" className="w-full" variant="default">
-                  Start Section
+                <Button onClick={() => startSection(section)} size="lg" className="w-full" variant="default" disabled={!examData}>
+                  {examData ? 'Start Section' : 'Loading...'}
                 </Button>
               )}
             </CardContent>

@@ -2,19 +2,23 @@
 
 import { useExam } from '@/context/ExamProvider';
 import { Button } from '@/components/ui/button';
-import { TOTAL_QUESTIONS_PER_SECTION } from '@/lib/questions';
 import { cn } from '@/lib/utils';
 
 export function ProgressTracker() {
-  const { currentSection, answers, currentQuestionIndex, selectQuestion } = useExam();
+  const { currentSection, answers, currentQuestionIndex, selectQuestion, examData } = useExam();
 
-  if (!currentSection) return null;
+  if (!currentSection || !examData) return null;
+
+  const sectionData = examData.sections.find(s => s.name.toLowerCase().replace(' ', '') === currentSection);
+  if (!sectionData) return null;
+
+  const totalQuestions = sectionData.questions.length;
 
   const sectionAnswers = answers[currentSection] || {};
 
   return (
     <div className="grid grid-cols-5 gap-2">
-      {Array.from({ length: TOTAL_QUESTIONS_PER_SECTION }, (_, i) => {
+      {Array.from({ length: totalQuestions }, (_, i) => {
         const questionState = sectionAnswers[i];
         const isAttempted = !!questionState?.answer;
         const isMarkedForDoubt = !!questionState?.isMarkedForDoubt;
