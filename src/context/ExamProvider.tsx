@@ -31,8 +31,10 @@ export const ExamProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error("Failed to parse state from localStorage", error);
+      // If parsing fails, stick with the initial state
+    } finally {
+      setIsInitialized(true);
     }
-    setIsInitialized(true);
   }, []);
 
   useEffect(() => {
@@ -95,8 +97,13 @@ export const ExamProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [router]);
 
   const resetExam = useCallback(() => {
-    setState(getInitialState());
-    localStorage.removeItem('examState');
+    const initialState = getInitialState();
+    setState(initialState);
+    try {
+      localStorage.setItem('examState', JSON.stringify(initialState));
+    } catch (error) {
+      console.error("Failed to clear state in localStorage", error);
+    }
     router.replace('/');
   }, [router]);
 
