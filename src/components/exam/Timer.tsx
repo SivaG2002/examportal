@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useExam } from '@/context/ExamProvider';
 import { Clock } from 'lucide-react';
-import { useToast } from '../ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export function Timer() {
   const { getRemainingTime, submitSection } = useExam();
