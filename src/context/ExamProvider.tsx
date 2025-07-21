@@ -7,17 +7,18 @@ import { DURATION_PER_SECTION } from '@/lib/questions';
 
 const ExamContext = createContext<ExamContextType | undefined>(undefined);
 
-const initialState: ExamState = {
+const getInitialState = (): ExamState => ({
   user: null,
   currentSection: null,
   completedSections: [],
   answers: {},
   currentQuestionIndex: 0,
   sectionStartTime: null,
-};
+});
+
 
 export const ExamProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<ExamState>(initialState);
+  const [state, setState] = useState<ExamState>(getInitialState());
   const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
 
@@ -94,16 +95,16 @@ export const ExamProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [router]);
 
   const resetExam = useCallback(() => {
-    setState(initialState);
+    setState(getInitialState());
     localStorage.removeItem('examState');
     router.replace('/');
   }, [router]);
 
   const getRemainingTime = useCallback(() => {
-    if (!state.sectionStartTime) return DURATION_PER_SECTION;
+    if (!state.sectionStartTime || !isInitialized) return DURATION_PER_SECTION;
     const elapsedTime = Date.now() - state.sectionStartTime;
     return Math.max(0, DURATION_PER_SECTION - elapsedTime);
-  }, [state.sectionStartTime]);
+  }, [state.sectionStartTime, isInitialized]);
 
 
   const value = {
@@ -117,8 +118,10 @@ export const ExamProvider: React.FC<{ children: React.ReactNode }> = ({ children
     getRemainingTime,
   };
 
+  // Render children only after the state has been initialized from localStorage on the client.
+  // This prevents hydration mismatches.
   if (!isInitialized) {
-    return null; // or a loading spinner
+    return null;
   }
 
   return <ExamContext.Provider value={value}>{children}</ExamContext.Provider>;
