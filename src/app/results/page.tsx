@@ -31,7 +31,10 @@ export default function ResultsPage() {
   const calculateStats = (section: Section) => {
     const sectionAnswers = answers[section] || {};
     const attempted = Object.values(sectionAnswers).filter(a => a.answer).length;
-    const correct = Object.values(sectionAnswers).filter((a, i) => a.answer === questions[section][i].correctAnswer).length;
+    const correct = Object.values(sectionAnswers).filter((a, i) => {
+      const question = questions[section][i];
+      return question && a.answer === question.answer;
+    }).length;
     const markedForDoubt = Object.values(sectionAnswers).filter(a => a.isMarkedForDoubt).length;
     return { attempted, correct, markedForDoubt };
   }
@@ -67,8 +70,11 @@ export default function ResultsPage() {
                       <AccordionContent>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
                             {Array.from({length: TOTAL_QUESTIONS_PER_SECTION}, (_, i) => {
+                                const question = questions[section][i];
+                                if (!question) return null;
+
                                 const ans = answers[section]?.[i];
-                                const isCorrect = ans?.answer === questions[section][i].correctAnswer;
+                                const isCorrect = ans?.answer === question.answer;
                                 const isAttempted = !!ans?.answer;
 
                                 return (

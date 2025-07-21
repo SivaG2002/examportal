@@ -8,15 +8,26 @@ export const sectionDetails: { [key in Section]: { name: string; icon: React.FC<
     analytics: { name: 'Analytics', icon: BarChart3 }
 };
 
-
 export interface Question {
+  id: number;
   question: string;
-  options: string[];
-  correctAnswer: string;
+  options: { [key: string]: string };
+  answer: string;
+}
+
+export interface ExamSection {
+  name: string;
+  questions: Question[];
+}
+
+export interface ExamData {
+  exam: string;
+  year: number;
+  sections: ExamSection[];
 }
 
 export interface Answer {
-  answer?: string;
+  answer?: string; // This will be the key of the option, e.g., "A", "B"
   isMarkedForDoubt: boolean;
 }
 

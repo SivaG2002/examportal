@@ -41,6 +41,10 @@ export function QuestionDisplay() {
 
   const isLastQuestion = currentQuestionIndex === TOTAL_QUESTIONS_PER_SECTION - 1;
 
+  if (!questionData) {
+    return <div>Loading question...</div>;
+  }
+
   return (
     <Card className="border-0 shadow-none">
       <CardHeader>
@@ -54,14 +58,15 @@ export function QuestionDisplay() {
             onValueChange={handleAnswerChange}
             className="space-y-4"
         >
-          {questionData.options.map((option, index) => (
-            <Label key={index}
+          {Object.entries(questionData.options).map(([key, optionText]) => (
+            <Label key={key}
               className={cn("flex items-center gap-4 p-4 rounded-lg border-2 transition-all cursor-pointer hover:border-accent",
-                currentAnswer?.answer === option ? "border-primary bg-primary/10" : "border-border"
+                currentAnswer?.answer === key ? "border-primary bg-primary/10" : "border-border"
               )}
             >
-              <RadioGroupItem value={option} id={`option-${index}`} />
-              <span className="text-base">{option}</span>
+              <RadioGroupItem value={key} id={`option-${key}`} />
+              <span className="font-bold mr-2">{key}.</span>
+              <span className="text-base">{optionText}</span>
             </Label>
           ))}
         </RadioGroup>
