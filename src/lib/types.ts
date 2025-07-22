@@ -1,14 +1,15 @@
 import { Sigma, BookText, BarChart3 } from 'lucide-react';
 import { z } from 'zod';
 
-export type Section = 'math' | 'english' | 'analytics' | 'englishlanguage';
+export type Section = string;
 
 // Keep this for UI details, but the source of truth for section names will be the fetched data.
-export const sectionDetails: { [key in Section]: { name: string; icon: React.FC<any> } } = {
+export const sectionDetails: { [key: string]: { name: string; icon: React.FC<any> } } = {
     math: { name: 'Math', icon: Sigma },
     english: { name: 'English', icon: BookText },
     analytics: { name: 'Analytics', icon: BarChart3 },
-    englishlanguage: { name: 'English Language', icon: BookText }
+    englishlanguage: { name: 'English Language', icon: BookText },
+    quantitativeaptitude: { name: 'Quantitative Aptitude', icon: Sigma },
 };
 
 // Zod Schemas for data validation

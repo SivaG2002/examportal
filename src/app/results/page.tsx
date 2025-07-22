@@ -36,12 +36,12 @@ export default function ResultsPage() {
     );
   }
 
-  const sections = examData.sections.map(s => s.name.toLowerCase().replace(' ', '') as Section);
   const totalQuestionsPerSection = examData.sections[0]?.questions.length || 25;
 
   const calculateStats = (section: Section) => {
     const sectionAnswers = answers[section] || {};
-    const sectionIndex = examData.sections.findIndex(s => s.name.toLowerCase().replace(' ', '') === section);
+    const sectionIndex = examData.sections.findIndex(s => s.name.toLowerCase().replace(/ /g, '') === section);
+    if (sectionIndex === -1) return { attempted: 0, correct: 0, markedForDoubt: 0 };
     const questions = examData.sections[sectionIndex].questions;
 
     const attempted = Object.values(sectionAnswers).filter(a => a.answer).length;
@@ -67,11 +67,11 @@ export default function ResultsPage() {
           <CardContent>
             <Accordion type="single" collapsible className="w-full">
               {examData.sections.map((sectionData, sectionIndex) => {
-                 const sectionKey = sectionData.name.toLowerCase().replace(' ', '') as Section;
+                 const sectionKey = sectionData.name.toLowerCase().replace(/ /g, '');
                  if (!completedSections.includes(sectionKey)) return null;
 
                  const stats = calculateStats(sectionKey);
-                 const details = sectionDetails[sectionKey];
+                 const details = sectionDetails[sectionKey] || sectionDetails['english']; // fallback
                  const Icon = details.icon;
                  
                  return (
@@ -79,7 +79,7 @@ export default function ResultsPage() {
                       <AccordionTrigger className="text-xl font-semibold hover:no-underline">
                         <div className="flex items-center gap-4 flex-wrap">
                            <Icon className="h-6 w-6 text-primary" />
-                           <span>{details.name}</span>
+                           <span>{sectionData.name}</span>
                            <Badge variant="secondary">{stats.attempted}/{totalQuestionsPerSection} Attempted</Badge>
                            <Badge variant="outline" className="text-green-600 border-green-600">{stats.correct} Correct</Badge>
                         </div>

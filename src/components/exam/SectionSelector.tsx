@@ -28,18 +28,21 @@ export function SectionSelector() {
     )
   }
 
-  const sections = examData.sections.map(s => s.name.toLowerCase().replace(/ /g, '') as Section);
+  const sections = examData.sections.map(s => ({
+      key: s.name.toLowerCase().replace(/ /g, ''),
+      name: s.name,
+  }));
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {sections.map((section) => {
-        const isCompleted = completedSections.includes(section);
-        const details = sectionDetails[section];
+        const isCompleted = completedSections.includes(section.key);
+        const details = sectionDetails[section.key] || sectionDetails['english']; // fallback icon
         const Icon = details.icon;
         
         return (
           <Card
-            key={section}
+            key={section.key}
             className={cn(
               "text-center transition-all transform hover:scale-105 hover:shadow-xl",
               isCompleted && "bg-muted/50 opacity-60"
@@ -49,7 +52,7 @@ export function SectionSelector() {
               <div className={cn("p-4 rounded-full mb-4", isCompleted ? "bg-gray-300" : "bg-primary/20")}>
                 <Icon className={cn("h-10 w-10", isCompleted ? "text-gray-500" : "text-primary")} />
               </div>
-              <CardTitle className="text-2xl font-semibold">{details.name}</CardTitle>
+              <CardTitle className="text-2xl font-semibold">{section.name}</CardTitle>
             </CardHeader>
             <CardContent>
               {isCompleted ? (
@@ -58,7 +61,7 @@ export function SectionSelector() {
                   Completed
                 </div>
               ) : (
-                <Button onClick={() => startSection(section)} size="lg" className="w-full" variant="default">
+                <Button onClick={() => startSection(section.key)} size="lg" className="w-full" variant="default">
                   Start Section
                 </Button>
               )}

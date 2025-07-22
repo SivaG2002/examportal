@@ -9,10 +9,13 @@ import { Button } from '../ui/button';
 import { LogOut } from 'lucide-react';
 
 export function ExamView() {
-  const { currentSection, submitSection } = useExam();
+  const { currentSection, submitSection, examData } = useExam();
 
-  if (!currentSection) return null;
-  const details = sectionDetails[currentSection];
+  if (!currentSection || !examData) return null;
+  
+  const sectionKey = currentSection.toLowerCase().replace(/ /g, '');
+  const sectionData = examData.sections.find(s => s.name.toLowerCase().replace(/ /g, '') === sectionKey);
+  const details = sectionDetails[sectionKey] || sectionDetails['english']; // fallback
   const Icon = details.icon;
 
   return (
@@ -22,7 +25,7 @@ export function ExamView() {
           <div className="flex justify-between items-center mb-4 border-b pb-4">
               <div className="flex items-center gap-3">
                   <Icon className="h-8 w-8 text-primary" />
-                  <h1 className="text-3xl font-bold">{details.name} Section</h1>
+                  <h1 className="text-3xl font-bold">{sectionData?.name || 'Section'}</h1>
               </div>
               <Timer />
           </div>
