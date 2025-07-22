@@ -2,7 +2,7 @@
 import {NextRequest, NextResponse} from 'next/server';
 import {ExamDataSchema, type ExamData} from '@/lib/types';
 import * as fs from 'fs/promises';
-import *d from 'path';
+import * as path from 'path';
 
 /**
  * API route handler for updating exam data.
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     // In a real application, you would save this to a database.
     // For this example, we'll overwrite the src/lib/exam-data.ts file.
-    const filePath = d.join(process.cwd(), 'src', 'lib', 'exam-data.ts');
+    const filePath = path.join(process.cwd(), 'src', 'lib', 'exam-data.ts');
 
     const fileContent = `
 import type { ExamData } from './types';
