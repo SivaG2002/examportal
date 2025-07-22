@@ -37,7 +37,7 @@ export function QuestionDisplay() {
       )
   };
 
-  const sectionData = examData.sections.find(s => s.name.toLowerCase().replace(' ', '') === currentSection);
+  const sectionData = examData.sections.find(s => s.name.toLowerCase().replace(/ /g, '') === currentSection);
   if (!sectionData) return <div>Section not found.</div>
 
   const totalQuestions = sectionData.questions.length;
@@ -91,22 +91,22 @@ export function QuestionDisplay() {
         </RadioGroup>
       </div>
 
-      <CardFooter className="flex justify-between items-center mt-4">
+      <CardFooter className="flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-4 mt-4">
         <Button 
             variant={currentAnswer?.isMarkedForDoubt ? 'secondary' : 'outline'} 
             onClick={handleDoubtToggle}
-            className={cn(currentAnswer?.isMarkedForDoubt && "bg-yellow-200 text-yellow-900 hover:bg-yellow-300")}
+            className={cn("w-full sm:w-auto", currentAnswer?.isMarkedForDoubt && "bg-yellow-200 text-yellow-900 hover:bg-yellow-300")}
         >
           <HelpCircle className="mr-2 h-4 w-4" />
           {currentAnswer?.isMarkedForDoubt ? 'Unmark Doubt' : 'Mark for Doubt'}
         </Button>
         <div>
           {isLastQuestion ? (
-            <Button onClick={submitSection} size="lg" variant="default" className="bg-green-600 hover:bg-green-700">
+            <Button onClick={submitSection} size="lg" variant="default" className="bg-green-600 hover:bg-green-700 w-full sm:w-auto">
               Submit Section <Check className="ml-2 h-5 w-5" />
             </Button>
           ) : (
-            <Button onClick={handleNext} size="lg" variant="default">
+            <Button onClick={handleNext} size="lg" variant="default" className="w-full sm:w-auto">
               Next Question <ChevronRight className="ml-2 h-5 w-5" />
             </Button>
           )}
